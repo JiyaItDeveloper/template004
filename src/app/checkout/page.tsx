@@ -1,195 +1,225 @@
-'use client';
+"use client";
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import { Product } from '../../../types/products';
+import { getCartItems } from '../actions/act';
 import Link from "next/link";
-import React, { useState } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import { urlFor } from "@/sanity/lib/image";
+import { CgChevronRight } from "react-icons/cg";
+import { client } from "@/sanity/lib/client";
+import Swal from "sweetalert2";
 
-const CheckoutPage = () => {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
+const Checkout = () => {
+  const [cartItems, setCartItems] = useState<Product[]>([]);
+  const [discount, setDiscount] = useState<number>(0);
+  const [formValues, setFormValues] = useState({
+    firstName: "",
+    lastName: "",
     address: "",
     city: "",
-    postalCode: "",
-    country: "",
-    paymentMethod: "creditCard",
+    zipCode: "",
+    phone: "",
+    email: "",
+  });
+  const [orderSuccess, setOrderSuccess] = useState(false);
+
+  const [formErrors, setFormErrors] = useState({
+    firstName: false,
+    lastName: false,
+    address: false,
+    city: false,
+    zipCode: false,
+    phone: false,
+    email: false,
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      const items = await getCartItems();
+      setCartItems(items);
+    };
+    fetchCartItems();
+    const appliedDiscount = localStorage.getItem("appliedDiscount");
+    if (appliedDiscount) {
+      setDiscount(Number(appliedDiscount));
+    }
+  }, []);
+
+  const subtotal = cartItems.reduce(
+    (total, item) => total + item.price * item.stockLevel,
+    0
+  );
+  const total = Math.max(subtotal - discount, 0);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormValues({
+      ...formValues,
+      [e.target.id]: e.target.value,
+    });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("Order Placed Successfully!");
+  const validateForm = () => {
+    const errors = {
+      firstName: !formValues.firstName,
+      lastName: !formValues.lastName,
+      address: !formValues.address,
+      city: !formValues.city,
+      zipCode: !formValues.zipCode,
+      phone: !formValues.phone,
+      email: !formValues.email,
+    };
+    setFormErrors(errors);
+    return Object.values(errors).every((error) => !error);
   };
 
+  const handlePlaceOrder = async () => {
+    if (!validateForm()) {
+      Swal.fire("Warning", "Please fill in all the fields", "warning");
+      return;
+    }
+
+    Swal.fire({
+      title: "Processing your order...",
+      text: "Please wait...",
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Proceed",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        if(validateForm()){
+          localStorage.removeItem('appliedDiscount');
+          Swal.fire("Success!", "Order placed successfully!", "success");
+        }else{
+          Swal.fire("Error", "Order could not be placed", "error");
+        }
+      }
+    });
+        const orderData = {
+          _type: "order",
+          firstName: formValues.firstName,
+          lastName: formValues.lastName,
+          address: formValues.address,
+          city: formValues.city,
+          zipCode: formValues.zipCode,
+          phone: formValues.phone,
+          email: formValues.email,
+          cartItems: cartItems.map((item) => ({
+            _type: "reference",
+            _ref: item._id,
+          })),
+          total: total,
+          discount: discount,
+          orderDate: new Date().toISOString(),
+        };
+
+        try {
+          await client.create(orderData);
+          localStorage.removeItem("appliedDiscount");
+          
+          } catch (error) {
+          console.error("Failed to place order:", error);
+          
+          } 
+  
+        }
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-gray-50 py-12 px-6 lg:px-12">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 lg:p-12">
-          <h1 className="text-3xl font-bold text-center text-[#1D3178] mb-8">Billing Information</h1>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Full Name */}
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700">
-                Full Name
-              </label>
-              <input
-                type="text"
-                name="fullName"
-                id="fullName"
-                value={formData.fullName}
-                onChange={handleInputChange}
-                className="mt-2 block w-full p-3 border rounded-md focus:ring focus:ring-pink-500 focus:outline-none"
-                placeholder="Enter your full name"
-                required
-              />
-            </div>
-
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                id="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="mt-2 block w-full p-3 border rounded-md focus:ring focus:ring-pink-500 focus:outline-none"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label htmlFor="phone" className="block text-sm font-semibold text-gray-700">
-                Phone
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                id="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className="mt-2 block w-full p-3 border rounded-md focus:ring focus:ring-pink-500 focus:outline-none"
-                placeholder="Enter your phone number"
-                required
-              />
-            </div>
-
-            {/* Address */}
-            <div>
-              <label htmlFor="address" className="block text-sm font-semibold text-gray-700">
-                Address
-              </label>
-              <input
-                type="text"
-                name="address"
-                id="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className="mt-2 block w-full p-3 border rounded-md focus:ring focus:ring-pink-500 focus:outline-none"
-                placeholder="Enter your address"
-                required
-              />
-            </div>
-
-            {/* City */}
-            <div>
-              <label htmlFor="city" className="block text-sm font-semibold text-gray-700">
-                City
-              </label>
-              <input
-                type="text"
-                name="city"
-                id="city"
-                value={formData.city}
-                onChange={handleInputChange}
-                className="mt-2 block w-full p-3 border rounded-md focus:ring focus:ring-pink-500 focus:outline-none"
-                placeholder="Enter your city"
-                required
-              />
-            </div>
-
-            {/* Postal Code */}
-            <div>
-              <label htmlFor="postalCode" className="block text-sm font-semibold text-gray-700">
-                Postal Code
-              </label>
-              <input
-                type="text"
-                name="postalCode"
-                id="postalCode"
-                value={formData.postalCode}
-                onChange={handleInputChange}
-                className="mt-2 block w-full p-3 border rounded-md focus:ring focus:ring-pink-500 focus:outline-none"
-                placeholder="Enter your postal code"
-                required
-              />
-            </div>
-
-            {/* Country */}
-            <div>
-              <label htmlFor="country" className="block text-sm font-semibold text-gray-700">
-                Country
-              </label>
-              <input
-                type="text"
-                name="country"
-                id="country"
-                value={formData.country}
-                onChange={handleInputChange}
-                className="mt-2 block w-full p-3 border rounded-md focus:ring focus:ring-pink-500 focus:outline-none"
-                placeholder="Enter your country"
-                required
-              />
-            </div>
-
-            {/* Payment Method */}
-            <div>
-              <label htmlFor="paymentMethod" className="block text-sm font-semibold text-gray-700">
-                Payment Method
-              </label>
-              <select
-                name="paymentMethod"
-                id="paymentMethod"
-                value={formData.paymentMethod}
-                onChange={handleInputChange}
-                className="mt-2 block w-full p-3 border rounded-md focus:ring focus:ring-pink-500 focus:outline-none"
-                required
-              >
-                <option value="creditCard">Credit Card</option>
-                <option value="paypal">PayPal</option>
-                <option value="cash">Cash on Delivery</option>
-              </select>
-            </div>
-
-            {/* Submit Button */}
-           
-            <li>
-                <Link href="/ordercompleted">
-            <button
-              type="submit"
-              className="w-full py-3 bg-[#FB2E86] text-white rounded-md font-semibold hover:bg-pink-600"
-            >
-              Place Order
-            </button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Breadcrumb */}
+      <div className="mt-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex items-center gap-2 py-4">
+            <Link href="/cart" className="text-gray-600 hover:text-black transition text-sm">
+              Cart
             </Link>
-            </li>
-          </form>
+            <CgChevronRight className="w-4 h-4 text-gray-600" />
+            <span className="text-sm">Checkout</span>
+          </nav>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    {/* Order Summary */}
+    
+<div className="bg-white border rounded-lg p-6">
+      <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+      {cartItems.length > 0 ? (
+        cartItems.map((item) => (
+          <div key={item._id} className="flex items-center gap-4 py-3 border-b">
+            {item.image && (
+              <Image src={urlFor(item.image).url()} alt={item.name} width={64} height={64} className="object-cover" />
+            )}
+            <div className="flex-1">
+              <h3 className="text-sm font-medium">{item.name}</h3>
+              <p className="text-xs text-gray-500">Quantity: {item.stockLevel}</p>
+            <p className="text-sm font-medium">${item.price * item.stockLevel}</p>
+            </div>
+          </div>
+        ))
+      ) : (
+        <p className="text-sm text-gray-500">Your cart is empty.</p>
+      )}
+      <div className="text-right pt-4">
+        <p className="text-sm">
+          Subtotal: <span className="font-medium">${subtotal}</span>
+        </p>
+        <p className="text-sm">
+          Discount: <span className="font-medium">-${discount}</span>
+        </p>
+        <p className="text-lg font-semibold">
+          Total: ${total.toFixed(2)}
+        </p>
+      </div>
+    </div>
+        
+        
+    {/* Billing Form */}
+
+    {/* Checkout Form */}
+     <div className="bg-white border rounded-lg p-6">
+      <h2 className="text-lg font-semibold mb-4">Billing Details</h2>
+      <form className="space-y-4">
+        {["firstName", "lastName", "address", "city", "zipCode", "phone", "email"].map((field) => (
+          <div key={field}>
+            <label htmlFor={field} className="block text-sm font-medium text-gray-700">
+              {field.replace(/([A-Z])/g, " $1")}
+            </label>
+            <input
+              type="text"
+              id={field}
+              value={formValues[field as keyof typeof formValues]}
+              onChange={handleInputChange}
+              className={`mt-1 block w-full border ${
+                formErrors[field as keyof typeof formErrors] ? "border-red-500" : "border-gray-300"
+              } rounded-md p-2`}
+            />
+            {formErrors[field as keyof typeof formErrors] && (
+              <p className="text-xs text-red-500">This field is required.</p>
+            )}
+          </div>
+        ))}
+
+<div>
+      <button
+        type="button"
+        onClick={handlePlaceOrder}
+        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+      >
+        Place Order
+      </button>
+      {orderSuccess && <p className="text-green-600 mt-4">Order Placed Successfully!</p>}
+    </div>
+
+    </form> 
+    </div>
+  
+
         </div>
       </div>
-      <Footer />
-    </>
-  );
-};
+    </div>
+   </div>
+ </div>
+   );
+ };
 
-export default CheckoutPage;
+ export default Checkout; 
+

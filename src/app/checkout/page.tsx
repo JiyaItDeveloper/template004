@@ -8,6 +8,7 @@ import { urlFor } from "@/sanity/lib/image";
 import { CgChevronRight } from "react-icons/cg";
 import { client } from "@/sanity/lib/client";
 import Swal from "sweetalert2";
+ 
 
 const Checkout = () => {
   const [cartItems, setCartItems] = useState<Product[]>([]);

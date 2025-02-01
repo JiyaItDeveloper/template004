@@ -2,7 +2,7 @@ export default{
     name: 'order',
     type: 'document',
     title: 'Order',
-    fileds:[
+    fields:[
         {
             name:'firstName',
             title:'First Name',
@@ -13,7 +13,7 @@ export default{
             title:'Last Name',
             type:'string'
         },
-{
+      {
             name:'email',
             title:'Email',
             type:'string'
@@ -34,69 +34,43 @@ export default{
             type:'string'
         },
         {
-            name:'zip',
-            title:'Zip',
+    
+            name:'zipCode',
+            title:'Zip Code',
             type:'string'
         },
+        
         {
-            name:'country',
-            title:'Country',
-            type:'string'
-        },
-        {
-            name:'paymentMethod',
-            title:'Payment Method',
-            type:'string'
-        },
-        {
-            name:'products',
-            title:'Products',
-            type:'array',
-            of:[
+            name:'cartItems',
+            title:'Cart Items',
+            type:'reference',
+            to:[
                 {
-                    type:'object',
-                    fields:[
-                        {
-                            name:'product',
-                            title:'Product',
-                            type:'reference',
-                            to:[{type:'product'}]
-                        },
-                        {
-                            name:'quantity',
-                            title:'Quantity',
-                            type:'number'
-                        },
-                        {
-                            name:'price',
-                            title:'Price',
-                            type:'number'
-                        },
+                    type:'reference',to:{type:'product'}}]
+                },
                         {
                             name:'total',
                             title:'Total',
                             type:'number'
                         },
                         {
-                            status:'status',
+                            name:'status',
                             title:'Order Status',
                             type:'string',
                             options:{
                                 list:[
                                     {title:'Pending', value:'pending'},
-                                    {title:'Processing', value:'processing'},
-                                    {title:'Shipped', value:'shipped'},
-                                    {title:'Delivered', value:'delivered'},
-                                    {title:'Canceled', value:'canceled'}
+                                    {title:'Success', value:'success'},
+                                    {title:'Dispatch', value:'dispatch'},
+                                    
                                 ],
-                                layout:'radio'
+                                layout:'radio' //optional
                             },
-                            initialValue:'pending'
+                            initialValue:'pending' //default value
                         }
                     ]
                 }
-            ]
-}
+            
 
-    ]
-}
+
+    

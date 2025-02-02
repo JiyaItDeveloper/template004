@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import Link from 'next/link';
-
+// signup
 function SignUp() {
   const [formData, setFormData] = useState({
     name: '',

@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 export default {
     name: 'product',
     type: 'document',

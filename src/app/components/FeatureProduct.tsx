@@ -18,7 +18,6 @@ const FeaturedProducts = () => {
         const fetchedProducts: Product[] = await client.fetch(allProducts);
         setProducts(fetchedProducts);
       } catch (error) {
-        console.error("Error fetching products:", error);
       }
     }
     fetchProducts();

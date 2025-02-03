@@ -12,7 +12,7 @@ import TopCategories from "./components/TopCategories";
 import Newslater from "./components/Newsletterr";
 import BlogSection from "./components/BlogSection";
 import Footer from "./components/Footer";
-
+// Home Page
 function Homepage(){
   return(
     <div>
